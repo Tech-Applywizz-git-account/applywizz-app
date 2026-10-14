@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Applywizz Mobile — Developer Handbook</title>
+  <meta name="description" content="End-to-end developer documentation for the Applywizz Expo mobile app: architecture, authentication, APIs, builds, dependencies, and related systems." />
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --bg-elevated: #ffffff;
+      --ink: #1a1f1c;
+      --ink-muted: #4a564f;
+      --line: #d8d2c6;
+      --accent: #0b6e4f;
+      --accent-soft: #e4f3ec;
+      --code-bg: #1e2421;
+      --code-ink: #e8efe9;
+      --warn-bg: #fff6e8;
+      --warn-line: #e0b56a;
+      --sidebar-w: 280px;
+      --max: 920px;
+      --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "Cascadia Code", "SF Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #dff0e8 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #efe6d4 0%, transparent 50%),
+        var(--bg);
+      font-family: var(--font-body);
+      line-height: 1.65;
+      font-size: 17px;
+    }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: #08553c; }
+    .layout { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; overflow: auto;
+      background: #13211b; color: #d7e4dc; padding: 1.5rem 1rem 2rem;
+      border-right: 1px solid #0a1511;
+    }
+    .sidebar .brand {
+      font-family: var(--font-display);
+      font-size: 1.35rem; color: #fff; margin: 0 0 0.25rem; letter-spacing: 0.02em;
+    }
+    .sidebar .tag {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #8fb5a2; margin-bottom: 1.5rem;
+    }
+    .sidebar nav a {
+      display: block; color: #c5d6cb; text-decoration: none;
+      padding: 0.35rem 0.6rem; border-radius: 6px; font-size: 0.92rem;
+    }
+    .sidebar nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .sidebar nav .sec {
+      margin: 1rem 0.6rem 0.35rem; font-size: 0.7rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #7a9889;
+    }
+    .main { padding: 2.5rem 2rem 5rem; }
+    .content { max-width: var(--max); margin: 0 auto; }
+    .hero {
+      background: var(--bg-elevated);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 2.25rem 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 12px 40px rgba(26, 31, 28, 0.06);
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 2.85rem);
+      line-height: 1.15; margin: 0 0 0.75rem; font-weight: 600;
+    }
+    .hero .lede { font-size: 1.15rem; color: var(--ink-muted); max-width: 40rem; }
+    .meta-row {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem;
+    }
+    .pill {
+      display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
+      background: var(--accent-soft); color: var(--accent); font-size: 0.8rem; font-weight: 600;
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.85rem; margin: 2.75rem 0 0.85rem; scroll-margin-top: 1.25rem;
+      border-bottom: 1px solid var(--line); padding-bottom: 0.4rem;
+    }
+    h3 {
+      font-size: 1.2rem; margin: 1.75rem 0 0.6rem; color: #24332c; scroll-margin-top: 1.25rem;
+    }
+    h4 { font-size: 1.02rem; margin: 1.25rem 0 0.4rem; }
+    p { margin: 0.65rem 0; }
+    ul, ol { margin: 0.5rem 0 1rem; padding-left: 1.35rem; }
+    li { margin: 0.3rem 0; }
+    table {
+      width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem;
+      background: var(--bg-elevated); font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid var(--line); padding: 0.65rem 0.75rem; text-align: left; vertical-align: top;
+    }
+    th { background: #efebe3; font-weight: 600; }
+    code, kbd {
+      font-family: var(--font-mono); font-size: 0.86em;
+      background: #ece7dd; padding: 0.1em 0.35em; border-radius: 4px;
+    }
+    pre {
+      background: var(--code-bg); color: var(--code-ink);
+      padding: 1rem 1.1rem; border-radius: 10px; overflow-x: auto;
+      font-family: var(--font-mono); font-size: 0.84rem; line-height: 1.5;
+    }
+    pre code { background: transparent; padding: 0; color: inherit; }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 0.9rem 1rem; margin: 1.25rem 0; border-radius: 0 10px 10px 0;
+    }
+    .callout.warn {
+      border-left-color: var(--warn-line);
+      background: var(--warn-bg);
+    }
+    .callout strong { display: block; margin-bottom: 0.25rem; }
+    .grid-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;
+    }
+    .card {
+      background: var(--bg-elevated); border: 1px solid var(--line);
+      border-radius: 12px; padding: 1rem 1.1rem;
+    }
+    .card h4 { margin-top: 0; }
+    .toc-inline { columns: 2; gap: 1.5rem; margin: 1rem 0 0; }
+    .toc-inline a { display: block; margin: 0.2rem 0; }
+    footer.doc-foot {
+      margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line);
+      color: var(--ink-muted); font-size: 0.9rem;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+      .grid-2, .toc-inline { columns: 1; grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Handbook navigation">
+      <p class="brand">Applywizz Mobile</p>
+      <p class="tag">Developer Handbook</p>
+      <nav>
+        <div class="sec">Start</div>
+        <a href="#overview">1. Overview</a>
+        <a href="#audience">2. Audience &amp; principles</a>
+        <a href="#ecosystem">3. Ecosystem map</a>
+        <a href="#quickstart">4. Quick start</a>
+        <div class="sec">Architecture</div>
+        <a href="#stack">5. Stack &amp; versions</a>
+        <a href="#folder-map">6. Folder map</a>
+        <a href="#runtime">7. Runtime boot sequence</a>
+        <a href="#workspaces">8. Workspaces (multi-app)</a>
+        <div class="sec">Auth &amp; security</div>
+        <a href="#authentication">9. Authentication</a>
+        <a href="#tokens">10. Tokens &amp; storage</a>
+        <a href="#impersonation">11. Impersonation</a>
+        <div class="sec">Data &amp; APIs</div>
+        <a href="#api-client">12. API client</a>
+        <a href="#endpoints">13. Endpoint catalog</a>
+        <a href="#related-services">14. Related services</a>
+        <div class="sec">Features</div>
+        <a href="#features">15. Feature surfaces</a>
+        <a href="#push">16. Push notifications</a>
+        <a href="#themes">17. Themes &amp; branding</a>
+        <div class="sec">Build &amp; ship</div>
+        <a href="#environments">18. Environments</a>
+        <a href="#eas">19. EAS builds</a>
+        <a href="#stores">20. Store submission</a>
+        <a href="#ci">21. CI &amp; tests</a>
+        <div class="sec">Reference</div>
+        <a href="#dependencies">22. Libraries</a>
+        <a href="#env-vars">23. Environment variables</a>
+        <a href="#troubleshooting">24. Troubleshooting</a>
+        <a href="#checklist">25. Onboarding checklist</a>
+        <a href="#glossary">26. Glossary</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <header class="hero" id="top">
+          <h1>Applywizz Mobile Developer Handbook</h1>
+          <p class="lede">
+            This is the definitive end-to-end guide for engineers working on the Applywizz staff mobile application.
+            It explains <em>what</em> the app is, <em>where</em> each piece lives, <em>how</em> it talks to backends,
+            <em>when</em> builds are produced for stores, and every dependency an engineer must understand before shipping a change.
+          </p>
+          <div class="meta-row">
+            <span class="pill">Expo SDK 57</span>
+            <span class="pill">React Native 0.86</span>
+            <span class="pill">Package com.invoices.app / com.applywizz.app</span>
+            <span class="pill">Version 1.1.1</span>
+            <span class="pill">Repo: applywizz-app</span>
+          </div>
+        </header>
+
+        <section id="overview">
+          <h2>1. Overview</h2>
+          <p>
+            <strong>Applywizz Mobile</strong> (npm package name <code>invoices-mobile</code>, Expo slug <code>invoices-mobile</code>)
+            is a React Native application built with Expo. It is the field and operations client for Applywizz staff:
+            invoicing and billing workflows, clients, reports, incentives, expenses, disputes, payment alerts, and
+            switching into adjacent product shells (Snackify inventory and Career Associate) when the signed-in user is entitled.
+          </p>
+          <p>
+            The mobile app is a <strong>thin client</strong>. Business rules, money movement, permissions, and persistence live in the
+            Django API hosted at <code>https://invoice-ge4q.onrender.com</code> (production). The app never talks to payment processors
+            or databases directly for invoice payment settlement; it calls Django under <code>/api/v1/</code>.
+          </p>
+          <div class="callout">
+            <strong>Repository split</strong>
+            Live development for this app belongs in
+            <a href="https://github.com/Tech-Applywizz-git-account/applywizz-app">Tech-Applywizz-git-account/applywizz-app</a>.
+            A frozen backup of the tree may also exist as <code>archive_mobile/</code> inside the original invoice monorepo.
+            The Django backend and web admin remain in the invoice monorepo (<code>backend/</code>, <code>frontend/</code>).
+          </div>
+        </section>
+
+        <section id="audience">
+          <h2>2. Audience &amp; principles</h2>
+          <h3>Who this document is for</h3>
+          <ul>
+            <li>Mobile engineers joining Applywizz who need a full mental model in one place.</li>
+            <li>Backend engineers who must understand what the client expects from auth, billing, and push APIs.</li>
+            <li>Release managers who run EAS builds and store submissions.</li>
+          </ul>
+          <h3>Engineering principles baked into this codebase</h3>
+          <ol>
+            <li><strong>API is source of truth.</strong> Screens fetch and mutate through Axios; do not invent local-only business state for money.</li>
+            <li><strong>Login must never block on push or Render wake-up.</strong> Warmup and FCM registration are fire-and-forget.</li>
+            <li><strong>Refresh is single-flight.</strong> Parallel 401s queue behind one token refresh; network failures on refresh do not wipe the session.</li>
+            <li><strong>Production builds never point at LAN IPs.</strong> Local Django is opt-in via <code>EXPO_PUBLIC_API_MODE=local</code>.</li>
+            <li><strong>Secrets stay out of git.</strong> <code>google-services.json</code>, keystores, service accounts, and <code>.env</code> are gitignored.</li>
+          </ol>
+        </section>
+
+        <section id="ecosystem">
+          <h2>3. Ecosystem map</h2>
+          <p>The mobile app sits in a multi-service landscape. Understand each neighbor before changing shared contracts.</p>
+          <table>
+            <thead>
+              <tr><th>System</th><th>Role relative to mobile</th><th>Typical URL / location</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Django Invoice API</td>
+                <td>Primary backend: auth, billing, invoices, notifications, incentives, expenses, themes</td>
+                <td><code>https://invoice-ge4q.onrender.com/api/v1/</code> (monorepo <code>backend/</code>)</td>
+              </tr>
+              <tr>
+                <td>Web frontend</td>
+                <td>Heavier admin console; feature parity target for staff workflows, not a dependency at runtime</td>
+                <td>invoice monorepo <code>frontend/</code></td>
+              </tr>
+              <tr>
+                <td>Snackify inventory API</td>
+                <td>Optional workspace shell; configured via <code>EXPO_PUBLIC_SNACKIFY_API_URL</code></td>
+                <td><code>https://snackify-inventory-tool.onrender.com</code></td>
+              </tr>
+              <tr>
+                <td>Supabase (Snackify)</td>
+                <td>Optional; URL + anon key via Expo extra for Snackify data paths</td>
+                <td>Env: <code>EXPO_PUBLIC_SNACKIFY_SUPABASE_*</code></td>
+              </tr>
+              <tr>
+                <td>Firebase Cloud Messaging</td>
+                <td>Android / native push delivery; Django sends HTTP v1; app registers device tokens</td>
+                <td><code>google-services.json</code> on device builds</td>
+              </tr>
+              <tr>
+                <td>Expo Application Services (EAS)</td>
+                <td>Cloud builds &amp; submit to Play Store / App Store</td>
+                <td>Owner <code>applywizz</code>, project id in <code>app.config.js</code></td>
+              </tr>
+              <tr>
+                <td>Apple App Store Connect</td>
+                <td>iOS distribution; ASC App ID in <code>eas.json</code> submit profile</td>
+                <td>ASC App Id <code>6807382724</code></td>
+              </tr>
+              <tr>
+                <td>Google Play Console</td>
+                <td>Android AAB submit via service account (local path, gitignored)</td>
+                <td><code>google-service-account.json</code></td>
+              </tr>
+            </tbody>
+          </table>
+          <pre><code>┌──────────────────┐     HTTPS /api/v1      ┌─────────────────────────┐
+│  Applywizz Mobile│ ─────────────────────► │  Django (Render)        │
+│  Expo / RN       │ ◄──── FCM via Firebase │  auth, billing, push…   │
+└────────┬─────────┘                        └───────────┬─────────────┘
+         │ workspace=snackify                           │
+         ▼                                              ▼
+┌──────────────────┐                          ┌─────────────────────────┐
+│ Snackify API +   │                          │ Web frontend (admin)    │
+│ optional Supabase│                          │ same API contracts      │
+└──────────────────┘                          └─────────────────────────┘</code></pre>
+        </section>
+
+        <section id="quickstart">
+          <h2>4. Quick start</h2>
+          <h3>Prerequisites</h3>
+          <ul>
+            <li>Node.js 20+ (CI uses Node 20)</li>
+            <li>npm</li>
+            <li>Expo Go on a physical device <em>or</em> Android emulator / iOS simulator</li>
+            <li>Access to a reachable Django API (hosted Render or local <code>0.0.0.0:8000</code>)</li>
+          </ul>
+          <h3>Install and run (Expo Go / Metro)</h3>
+          <pre><code>git clone https://github.com/Tech-Applywizz-git-account/applywizz-app.git
+cd applywizz-app
+npm install
+npx expo start --host lan --clear</code></pre>
+          <p>
+            Scan the QR code with Expo Go. For a <strong>local</strong> API, set in a local <code>.env</code> (never commit):
+          </p>
+          <pre><code>EXPO_PUBLIC_API_MODE=local
+# optional: EXPO_PUBLIC_API_HOST=192.168.x.x</code></pre>
+          <p>Start Django so phones on the same Wi‑Fi can reach it:</p>
+          <pre><code>cd path/to/invoice/backend
+python manage.py runserver 0.0.0.0:8000</code></pre>
+          <div class="callout warn">
+            <strong>Firewall</strong>
+            On Windows, allow Python through the firewall when prompted. Android emulators use <code>10.0.2.2</code> as the host loopback;
+            iOS simulators use <code>127.0.0.1</code>; physical devices need the machine LAN IP (auto-detected from Metro hostUri when mode is local).
+          </div>
+        </section>
+
+        <section id="stack">
+          <h2>5. Stack &amp; versions</h2>
+          <table>
+            <thead><tr><th>Layer</th><th>Choice</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Runtime</td><td>Expo ~57 / React Native 0.86.3</td><td><code>newArchEnabled: true</code></td></tr>
+              <tr><td>UI library</td><td>React 19.2.3</td><td>Function components + Context</td></tr>
+              <tr><td>Navigation</td><td>React Navigation 7</td><td>Native stack + bottom tabs inside product navigators</td></tr>
+              <tr><td>HTTP</td><td>Axios 1.7+</td><td>Balanced request lanes adapter</td></tr>
+              <tr><td>Persistence</td><td>AsyncStorage 2.2</td><td>Tokens, user snapshot, workspace, query cache</td></tr>
+              <tr><td>Fonts</td><td>@expo-google-fonts/poppins</td><td>Loaded in <code>App.js</code></td></tr>
+              <tr><td>Push</td><td>expo-notifications + FCM</td><td>Native device token preferred</td></tr>
+              <tr><td>Builds</td><td>EAS Build / Submit</td><td>Profiles in <code>eas.json</code></td></tr>
+            </tbody>
+          </table>
+          <p>Identifiers:</p>
+          <ul>
+            <li>Android application id: <code>com.invoices.app</code> (versionCode 19 at handbook time)</li>
+            <li>iOS bundle id: <code>com.applywizz.app</code> (buildNumber 20)</li>
+            <li>Deep link scheme: <code>invoices</code></li>
+            <li>Display name: <strong>Applywizz</strong></li>
+          </ul>
+        </section>
+
+        <section id="folder-map">
+          <h2>6. Folder map</h2>
+          <pre><code>applywizz-app/   (formerly invoice monorepo path app/mobile/)
+├── App.js                 # Providers, splash, nav container, push wiring
+├── index.js               # Entry: background tasks + registerRootComponent
+├── app.config.js          # Dynamic Expo config (API URLs, privacy, plugins)
+├── eas.json               # EAS build &amp; submit profiles
+├── package.json           # Scripts and dependencies
+├── babel.config.js
+├── metro.config.js
+├── assets/                # Icons, splash, loaders
+├── docs/                  # Architecture, push guide, THIS handbook
+├── invoice/               # Invoice product navigator shell
+├── snackify/              # Snackify product navigator + API helpers
+├── careerAssociate/       # Career Associate shell
+├── scripts/               # Privacy audit, asset helpers
+└── src/
+    ├── api/               # Axios client, feature API modules, cache, warmup
+    ├── components/        # Shared UI (banners, loaders, legal links…)
+    ├── config/            # runtimeConfig (env → Expo extra)
+    ├── context/           # AuthContext, WorkspaceContext
+    ├── hooks/
+    ├── navigation/        # RootNavigator, linking
+    ├── notifications/     # push.js, background tasks
+    ├── screens/           # Feature screens by domain
+    ├── storeDemo/         # Store screenshot / demo fixtures
+    ├── themes/            # Remote event themes
+    └── utils/             # Billing helpers, OTP form utils, etc.</code></pre>
+        </section>
+
+        <section id="runtime">
+          <h2>7. Runtime boot sequence</h2>
+          <ol>
+            <li><code>index.js</code> imports background notification task module, prevents auto-hide of splash, registers <code>App</code>.</li>
+            <li><code>App.js</code> loads Poppins fonts, wraps tree in SafeArea → Auth → Workspace → Theme → Toast providers.</li>
+            <li><code>Gate</code> warms the backend (<code>/api/v1/ping/</code>), starts keep-alive, hydrates disk query cache.</li>
+            <li><code>AuthProvider</code> restores <code>access</code> + cached <code>user</code> from AsyncStorage; if present, shows app immediately and refreshes <code>/auth/me/</code> in background.</li>
+            <li><code>RootNavigator</code>: no user → Login (and optional Register); with user → <code>ProductHost</code> by workspace.</li>
+            <li>Push listeners attach; pending alert polling starts when appropriate; Android payment notification channel is ensured.</li>
+          </ol>
+          <div class="callout">
+            <strong>Why Home can paint fast after login</strong>
+            Query cache hydration intentionally survives login. Bootstrap workers overwrite keys; wiping the cache on every login caused 30–60s cold Home waits.
+          </div>
+        </section>
+
+        <section id="workspaces">
+          <h2>8. Workspaces (multi-app shell)</h2>
+          <p>
+            One binary hosts three product navigators. Entitlements come from <code>user.apps</code> on the auth payload.
+            Workspace id is persisted under AsyncStorage key <code>applywizz.workspace</code>.
+          </p>
+          <table>
+            <thead><tr><th>workspaceId</th><th>Navigator</th><th>Default preference rule</th></tr></thead>
+            <tbody>
+              <tr><td><code>invoice</code></td><td><code>invoice/</code></td><td>Preferred whenever entitled</td></tr>
+              <tr><td><code>snackify</code></td><td><code>snackify/</code></td><td>Fallback when no invoice; alone if only snackify</td></tr>
+              <tr><td><code>career</code></td><td><code>careerAssociate/</code></td><td>Used when snackify+career without invoice</td></tr>
+            </tbody>
+          </table>
+          <p>If <code>user.apps</code> is missing/empty, the client currently defaults allowed apps to <code>["snackify"]</code>.</p>
+        </section>
+
+        <section id="authentication">
+          <h2>9. Authentication</h2>
+          <p>
+            Authentication is email-based against Django SimpleJWT-style endpoints under <code>/api/v1/auth/</code>.
+            The login screen also supports authenticator OTP when the API responds with <code>require_otp: true</code>.
+          </p>
+          <h3>Happy path</h3>
+          <ol>
+            <li>User submits email + password on <code>LoginScreen</code>.</li>
+            <li><code>AuthContext.signIn</code> → <code>POST /auth/login/</code> with body <code>{ email, password }</code> and optional <code>otp</code>.</li>
+            <li>If <code>require_otp</code>, UI switches to 6-digit OTP grid; user resubmits with OTP.</li>
+            <li>On success, response must include <code>tokens.access</code>, <code>tokens.refresh</code>, and <code>user</code>.</li>
+            <li>Optional <code>legacy_tokens</code> are stored for dual-DB / legacy payment paths (<code>X-Legacy-Token</code> header).</li>
+            <li>Client persists tokens, sets user, starts bootstrap worker, registers push token (non-blocking).</li>
+          </ol>
+          <h3>Session restore</h3>
+          <p>
+            Cold start with stored access token + user JSON shows the product UI immediately, then revalidates via
+            <code>GET /auth/me/</code>. Unauthorized handler is wired to <code>signOut</code>.
+          </p>
+          <h3>Logout</h3>
+          <p>
+            UI clears first (instant navigation to Login). Background cleanup (best-effort, capped ~600ms): 
+            <code>POST /auth/logout/</code> with refresh token, clear AsyncStorage keys, clear Snackify session, unregister push device.
+          </p>
+          <h3>Self-registration</h3>
+          <p>
+            Register screen is compiled in only when runtime extra <code>allowSelfRegistration</code> is true.
+            That flag is derived in <code>src/config/runtimeConfig.js</code>: never on production <code>APP_ENV</code>, and only when
+            <code>EXPO_PUBLIC_ALLOW_SELF_REGISTRATION=true</code>. Endpoint: <code>POST /auth/register/</code>.
+          </p>
+        </section>
+
+        <section id="tokens">
+          <h2>10. Tokens &amp; storage</h2>
+          <table>
+            <thead><tr><th>AsyncStorage key</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>access</code> / <code>refresh</code></td><td>Primary JWT pair</td></tr>
+              <tr><td><code>legacy_access</code> / <code>legacy_refresh</code></td><td>Legacy API dual-auth header</td></tr>
+              <tr><td><code>user</code></td><td>Cached user profile JSON for fast boot</td></tr>
+              <tr><td><code>owner_*</code></td><td>Saved owner session during impersonation</td></tr>
+              <tr><td><code>applywizz.workspace</code></td><td>Selected product workspace</td></tr>
+            </tbody>
+          </table>
+          <h3>Axios authorization</h3>
+          <ul>
+            <li>Request interceptor attaches <code>Authorization: Bearer &lt;access&gt;</code> (skipped for login).</li>
+            <li>Also attaches <code>X-Legacy-Token</code> when legacy access exists.</li>
+            <li>On 401 (non-auth bootstrap URLs): single-flight <code>POST /auth/login/refresh/</code> with <code>{ refresh }</code>.</li>
+            <li>Rotated refresh tokens from SimpleJWT are written back to storage.</li>
+            <li>Only 401/403/400 on refresh force logout; network/5xx keep the session.</li>
+            <li>FormData uploads strip Content-Type so RN can set multipart boundaries.</li>
+          </ul>
+        </section>
+
+        <section id="impersonation">
+          <h2>11. Impersonation (“view as”)</h2>
+          <p>
+            Admins can start impersonation via <code>POST /auth/impersonate/start/</code> with <code>{ user_id }</code>.
+            The client stashes the owner tokens under <code>owner_*</code>, persists the target user’s tokens, clears workspace + Snackify session,
+            and continues as the target. Stop via <code>POST /auth/impersonate/stop/</code> then restore owner tokens.
+            A 404 means the deployed backend is missing impersonation routes — point at a newer API.
+          </p>
+        </section>
+
+        <section id="api-client">
+          <h2>12. API client</h2>
+          <p>Central module: <code>src/api/client.js</code>.</p>
+          <ul>
+            <li><code>resolveApiOrigin()</code>: if <code>extra.apiMode === "local"</code> → <code>http://&lt;host&gt;:8000</code>; else <code>extra.apiUrl</code> or Render default.</li>
+            <li><code>API_BASE = ORIGIN + /api/v1</code></li>
+            <li>Default timeout 20s; some billing calls raise to 30–60s.</li>
+            <li><code>createMobileBalancedAdapter</code> in <code>requestLanes.js</code> limits concurrent pressure on slow networks.</li>
+            <li><code>networkLog.js</code> attaches debug logging for the in-app network log screen.</li>
+            <li><code>warmup.js</code> pings <code>/api/v1/ping/</code> and keep-alives hosted Render free-tier cold starts.</li>
+          </ul>
+        </section>
+
+        <section id="endpoints">
+          <h2>13. Endpoint catalog (mobile-consumed)</h2>
+          <p>
+            This is the practical catalog of Django routes the mobile client calls. All paths are relative to <code>/api/v1</code>.
+            Exact permission matrices live on the backend.
+          </p>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Auth</h4>
+              <ul>
+                <li><code>POST /auth/login/</code></li>
+                <li><code>POST /auth/login/refresh/</code></li>
+                <li><code>POST /auth/logout/</code></li>
+                <li><code>POST /auth/register/</code></li>
+                <li><code>GET /auth/me/</code></li>
+                <li><code>POST /auth/impersonate/start|stop/</code></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Notifications</h4>
+              <ul>
+                <li><code>POST /notifications/devices/register/</code></li>
+                <li><code>POST /notifications/devices/unregister/</code></li>
+                <li><code>GET /notifications/alerts/pending/</code></li>
+                <li><code>POST /notifications/alerts/acknowledge/</code></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Billing &amp; payments</h4>
+              <ul>
+                <li><code>/billing/inbox/</code>, <code>/billing/intents/…</code></li>
+                <li>mark-paid, update-unpaid, cancel, send, shift-owner</li>
+                <li><code>/billing/invoice-requests/</code></li>
+                <li><code>/billing/upi-accounts/</code>, <code>/zelle-accounts/</code></li>
+                <li><code>/payments/coupons/validate/</code>, coupon-requests</li>
+                <li><code>/paylinks/</code></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Core CRM / ops</h4>
+              <ul>
+                <li><code>/clients/</code>, <code>/services/</code>, <code>/crm/leads/</code></li>
+                <li><code>/users/subordinates/</code></li>
+                <li><code>/expenses/</code>, <code>/expense-categories/</code></li>
+                <li><code>/disputes/</code> (+ resolve/fail)</li>
+                <li><code>/contracts/</code></li>
+                <li><code>/settings/</code></li>
+                <li>Incentives modules via <code>src/api/incentives.js</code></li>
+                <li>Admin themes under event-theme admin roots</li>
+              </ul>
+            </div>
+          </div>
+          <p>Feature wrappers live beside the client: <code>billing.js</code>, <code>disputes.js</code>, <code>invoiceRequests.js</code>, <code>externalPaidRequests.js</code>, <code>incentives.js</code>, <code>admin.js</code>, <code>coupons.js</code>, <code>whatsapp.js</code>, <code>themes/api.js</code>.</p>
+        </section>
+
+        <section id="related-services">
+          <h2>14. Related services &amp; when they matter</h2>
+          <table>
+            <thead><tr><th>When you change…</th><th>Also coordinate with…</th></tr></thead>
+            <tbody>
+              <tr><td>Login, OTP, impersonation, apps entitlements</td><td><code>backend/apps/authentication</code></td></tr>
+              <tr><td>Mark paid, inbox, intents, coupons</td><td><code>backend/apps</code> payments/billing + webhooks; race/idempotency rules</td></tr>
+              <tr><td>Push copy or device registration</td><td><code>backend/apps/notifications</code> + Firebase project</td></tr>
+              <tr><td>Snackify screens</td><td>Snackify Render service + optional Supabase keys</td></tr>
+              <tr><td>Remote themes</td><td>Backend event_themes APIs + ThemeAdmin screen</td></tr>
+              <tr><td>Store listing / demo mode</td><td><code>storeDemo/</code> fixtures + <code>EXPO_PUBLIC_STORE_DEMO</code></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="features">
+          <h2>15. Feature surfaces (invoice workspace)</h2>
+          <p>Primary staff surfaces (names approximate screen modules under <code>src/screens/</code>):</p>
+          <ul>
+            <li><strong>Home / Dashboard</strong> — targets, summaries, live activity affordances</li>
+            <li><strong>Invoices &amp; billing</strong> — list/editor, create billing, external paid requests, mark paid with proof uploads</li>
+            <li><strong>Clients</strong> — list/detail/editor</li>
+            <li><strong>Reports</strong> — range reports and paid transactions</li>
+            <li><strong>Incentives</strong> — AM overview/dashboard, admin, period lock controls</li>
+            <li><strong>Disputes</strong> — list/detail with evidence upload</li>
+            <li><strong>Expenses</strong> — list/editor + categories</li>
+            <li><strong>Admin</strong> — users, hierarchy, services, coupons, invoice terms, theme admin</li>
+            <li><strong>Settings / Profile</strong> — accent/currency-ish settings patch, avatar, legal links, sign out</li>
+            <li><strong>Misc</strong> — contracts, projects, price book, calendar, network log (debug)</li>
+          </ul>
+        </section>
+
+        <section id="push">
+          <h2>16. Push notifications</h2>
+          <p>Detailed operational guide: <a href="./PUSH_NOTIFICATIONS.md">PUSH_NOTIFICATIONS.md</a>. Summary for developers:</p>
+          <ul>
+            <li>Production path: Django <code>firebase-admin</code> → FCM HTTP v1 → device system tray (works backgrounded/killed on proper EAS builds).</li>
+            <li>App registers native token via <code>getDevicePushTokenAsync</code> after login (<code>src/notifications/push.js</code>).</li>
+            <li>Android package in Firebase must match <code>com.invoices.app</code>; place <code>google-services.json</code> locally before EAS Android builds.</li>
+            <li>Expo Go on Android (SDK 53+) cannot receive remote FCM; app polls <code>/notifications/alerts/pending/</code> while open.</li>
+            <li>Payment-received copy targets owning staff; tap routes toward invoices.</li>
+          </ul>
+          <div class="callout warn">
+            <strong>Rebuild required</strong>
+            Adding or changing <code>google-services.json</code> requires a new native build. A Metro reload is not enough.
+          </div>
+        </section>
+
+        <section id="themes">
+          <h2>17. Themes &amp; branding</h2>
+          <ul>
+            <li>Base brand tokens in <code>src/theme</code> / typography (Poppins).</li>
+            <li>Remote “event themes” via <code>src/themes/*</code> with strict payload sanitization, cache, and overlay (<code>ThemeOverlay</code>).</li>
+            <li>Admin CRUD/publish/rollback against backend theme admin API (<code>src/themes/api.js</code>).</li>
+            <li>Route-aware theme selection follows the focused React Navigation route name.</li>
+          </ul>
+        </section>
+
+        <section id="environments">
+          <h2>18. Environments</h2>
+          <table>
+            <thead><tr><th>Mode</th><th>How selected</th><th>API target</th><th>Typical use</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Local</td>
+                <td><code>EXPO_PUBLIC_API_MODE=local</code> in <code>.env</code> / config</td>
+                <td><code>http://&lt;LAN|:8000&gt;</code></td>
+                <td>Feature work against local Django</td>
+              </tr>
+              <tr>
+                <td>Development EAS</td>
+                <td>profile <code>development</code></td>
+                <td>Render production API URL (as currently configured)</td>
+                <td>Dev client APK</td>
+              </tr>
+              <tr>
+                <td>Preview</td>
+                <td>profile <code>preview</code></td>
+                <td>Render</td>
+                <td>Internal QA APK / iOS device</td>
+              </tr>
+              <tr>
+                <td>Store screenshots</td>
+                <td>profile <code>store-screenshots</code></td>
+                <td>Render + <code>STORE_DEMO=true</code></td>
+                <td>Fixture-driven screenshots</td>
+              </tr>
+              <tr>
+                <td>Production / ios-store</td>
+                <td>profiles <code>production</code>, <code>ios-store</code></td>
+                <td>Render; demo forced off on Android production</td>
+                <td>Play / App Store binaries</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><code>APP_ENV</code> feeds <code>runtimeConfig</code> (registration gating, store demo guards). Default production API constant in config: <code>https://invoice-ge4q.onrender.com</code>.</p>
+        </section>
+
+        <section id="eas">
+          <h2>19. EAS builds — where, how, when</h2>
+          <h3>Where builds happen</h3>
+          <p>
+            Native binaries are produced on <strong>Expo Application Services</strong> cloud builders, not on developer laptops
+            (except local <code>expo run</code> experiments). Configuration: <code>eas.json</code> + <code>app.config.js</code>.
+            Expo account owner: <code>applywizz</code>. EAS project id is embedded in config (overridable via env).
+          </p>
+          <h3>How to trigger</h3>
+          <pre><code># from repo root (this app)
+npm install
+npx eas-cli login   # if needed
+npm run eas:preview:android
+npm run eas:preview:ios
+npm run eas:play:build
+npm run eas:ios:build</code></pre>
+          <p>Equivalent direct CLI:</p>
+          <pre><code>eas build --platform android --profile preview
+eas build --platform ios --profile ios-store
+eas build --platform android --profile production</code></pre>
+          <h3>When to build which profile</h3>
+          <ul>
+            <li><strong>After JS-only fixes for QA:</strong> often Expo Go or an existing preview install is enough.</li>
+            <li><strong>After native dependency / plugin / google-services / permissions change:</strong> new EAS build required.</li>
+            <li><strong>Before Play Store release:</strong> <code>production</code> → Android App Bundle.</li>
+            <li><strong>Before App Store release:</strong> <code>ios-store</code> with remote credentials.</li>
+            <li><strong>Screenshot campaign:</strong> <code>store-screenshots</code> with demo fixtures enabled.</li>
+          </ul>
+          <h3>Artifacts</h3>
+          <ul>
+            <li>Android preview/dev: APK (<code>buildType: apk</code>)</li>
+            <li>Android production: AAB (<code>app-bundle</code>), credentialsSource local for Play keystore wiring</li>
+            <li>iOS store: distribution store, remote credentials, medium resource class</li>
+          </ul>
+        </section>
+
+        <section id="stores">
+          <h2>20. Store submission</h2>
+          <pre><code>npm run eas:play:submit    # Android internal track draft (service account file required locally)
+npm run eas:ios:submit     # iOS via ASC app id in eas.json</code></pre>
+          <p>
+            Play submit expects <code>./google-service-account.json</code> (gitignored). iOS submit profile <code>ios-store</code>
+            references App Store Connect app id <code>6807382724</code>. Privacy manifests and usage strings are declared in
+            <code>app.config.js</code> (photo library, camera copy, required-reason APIs). Run
+            <code>npm run audit:ios:privacy</code> before iOS compliance reviews.
+          </p>
+        </section>
+
+        <section id="ci">
+          <h2>21. CI &amp; tests</h2>
+          <p>When this app lived in the invoice monorepo, GitHub Actions ran:</p>
+          <ul>
+            <li><code>npm ci</code> in the mobile directory</li>
+            <li><code>npm test</code> — Node-based unit tests (incentives, themes, runtimeConfig, authForm, billing.payment, requestLanes, storeDemo)</li>
+            <li><code>npx expo export --platform android</code> smoke export</li>
+          </ul>
+          <p>Locally:</p>
+          <pre><code>npm test</code></pre>
+          <p>Add a test for every behaviour change in pure logic modules. UI-only tweaks may not need a Node test, but API contract changes should.</p>
+        </section>
+
+        <section id="dependencies">
+          <h2>22. Libraries (declared dependencies)</h2>
+          <p>From <code>package.json</code> at handbook publication time. Prefer matching Expo SDK-compatible versions; do not casually major-bump Expo.</p>
+          <table>
+            <thead><tr><th>Package</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td><code>expo</code> and expo-* modules</td><td>Runtime, assets, fonts, image picker, notifications, splash, clipboard, device, linking, background-task, build-properties, task-manager</td></tr>
+              <tr><td><code>react</code> / <code>react-native</code></td><td>UI runtime</td></tr>
+              <tr><td><code>@react-navigation/*</code></td><td>Navigation containers, tabs, native stack</td></tr>
+              <tr><td><code>axios</code></td><td>HTTP</td></tr>
+              <tr><td><code>@react-native-async-storage/async-storage</code></td><td>Durable client state</td></tr>
+              <tr><td><code>@react-native-community/netinfo</code></td><td>Offline banner / connectivity</td></tr>
+              <tr><td><code>react-native-gesture-handler</code></td><td>Gesture root (imported first in App)</td></tr>
+              <tr><td><code>react-native-safe-area-context</code> / <code>screens</code></td><td>Safe areas + native screens</td></tr>
+              <tr><td><code>react-native-svg</code> + <code>react-native-qrcode-svg</code></td><td>SVG + login/MFA QR display</td></tr>
+              <tr><td><code>@expo/vector-icons</code> / Poppins</td><td>Icons and typography</td></tr>
+              <tr><td><code>babel-preset-expo</code></td><td>Metro/Babel preset</td></tr>
+            </tbody>
+          </table>
+          <p>DevDependency: <code>@babel/core</code>. Native modules imply EAS rebuild when added.</p>
+        </section>
+
+        <section id="env-vars">
+          <h2>23. Environment variables</h2>
+          <p>
+            <code>app.config.js</code> merges local <code>.env</code> (and historically a monorepo root <code>.env</code>) with <code>process.env</code>.
+            In the standalone <code>applywizz-app</code> repo, use a local <code>.env</code> only. Never commit secrets.
+          </p>
+          <table>
+            <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>APP_ENV</code></td><td><code>development</code> | <code>preview</code> | <code>production</code> semantics for runtime guards</td></tr>
+              <tr><td><code>EXPO_PUBLIC_API_URL</code></td><td>Override API origin (https)</td></tr>
+              <tr><td><code>EXPO_PUBLIC_API_MODE</code></td><td><code>local</code> forces LAN Django on port 8000</td></tr>
+              <tr><td><code>EXPO_PUBLIC_API_HOST</code></td><td>Force LAN IP for local mode</td></tr>
+              <tr><td><code>EXPO_PUBLIC_ALLOW_SELF_REGISTRATION</code></td><td>Enable Register screen outside production</td></tr>
+              <tr><td><code>EXPO_PUBLIC_PRIVACY_POLICY_URL</code> / <code>SUPPORT_URL</code></td><td>Legal links (https validated)</td></tr>
+              <tr><td><code>EXPO_PUBLIC_STORE_DEMO</code></td><td>Enable store demo fixtures</td></tr>
+              <tr><td><code>EXPO_PUBLIC_STORE_DEMO_ALLOW_PRODUCTION</code></td><td>Explicit break-glass for demo in production builds</td></tr>
+              <tr><td><code>EXPO_PUBLIC_SNACKIFY_API_URL</code></td><td>Snackify HTTP API</td></tr>
+              <tr><td><code>EXPO_PUBLIC_SNACKIFY_SUPABASE_URL</code> / <code>_ANON_KEY</code></td><td>Snackify Supabase (anon only)</td></tr>
+              <tr><td><code>EXPO_PUBLIC_EAS_PROJECT_ID</code> / <code>EAS_PROJECT_ID</code></td><td>Override EAS project</td></tr>
+              <tr><td><code>EXPO_OWNER</code></td><td>Expo account owner override</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="troubleshooting">
+          <h2>24. Troubleshooting</h2>
+          <table>
+            <thead><tr><th>Symptom</th><th>Likely cause</th><th>What to do</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Network Error on device</td>
+                <td>Phone cannot reach API origin</td>
+                <td>Check <code>[api] baseURL</code> log; same Wi‑Fi; Django on <code>0.0.0.0</code>; firewall; API mode</td>
+              </tr>
+              <tr>
+                <td>Login loops / instant logout</td>
+                <td>Refresh rejected or missing tokens</td>
+                <td>Inspect refresh status; clear app storage; verify backend JWT settings</td>
+              </tr>
+              <tr>
+                <td>No tray notification when killed</td>
+                <td>Missing FCM config or Expo Go</td>
+                <td>Use EAS build with <code>google-services.json</code>; confirm device register API</td>
+              </tr>
+              <tr>
+                <td>Register screen missing</td>
+                <td>Production env or flag off</td>
+                <td>Expected; enable only non-prod + explicit flag</td>
+              </tr>
+              <tr>
+                <td>View-as 404</td>
+                <td>Old backend deploy</td>
+                <td>Deploy authentication impersonation endpoints</td>
+              </tr>
+              <tr>
+                <td>Wrong product after login</td>
+                <td><code>user.apps</code> entitlements / workspace cache</td>
+                <td>Check API user payload; clear <code>applywizz.workspace</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="checklist">
+          <h2>25. New developer onboarding checklist</h2>
+          <ol>
+            <li>Clone <code>applywizz-app</code>; read this handbook and <code>SYSTEM_ARCHITECTURE.md</code>.</li>
+            <li>Install Node 20; <code>npm install</code>; run Expo against hosted API first (proves auth works).</li>
+            <li>Obtain a non-production staff test account (ask an admin — do not share production passwords in chat).</li>
+            <li>Optionally wire local Django from the invoice monorepo with <code>EXPO_PUBLIC_API_MODE=local</code>.</li>
+            <li>Skim <code>src/api/client.js</code> and <code>AuthContext.js</code> before touching networking.</li>
+            <li>For push work, read <code>PUSH_NOTIFICATIONS.md</code>; use a physical Android device + EAS preview build.</li>
+            <li>Never commit <code>.env</code>, <code>google-services.json</code>, keystores, or service accounts.</li>
+            <li>Before PR: <code>npm test</code>; for native changes, coordinate an EAS preview build.</li>
+            <li>API contract changes: open a paired PR on the invoice backend when required.</li>
+          </ol>
+        </section>
+
+        <section id="glossary">
+          <h2>26. Glossary</h2>
+          <dl>
+            <dt><strong>EAS</strong></dt><dd>Expo Application Services — cloud native builds and store submit.</dd>
+            <dt><strong>FCM</strong></dt><dd>Firebase Cloud Messaging — OS-level push channel used by production Android builds.</dd>
+            <dt><strong>Intent (billing)</strong></dt><dd>Server-side billing intent resource manipulated from Create Billing / inbox flows.</dd>
+            <dt><strong>Legacy token</strong></dt><dd>Secondary JWT used to reach legacy payment data paths via <code>X-Legacy-Token</code>.</dd>
+            <dt><strong>StaffPushAlert</strong></dt><dd>Backend-persisted alert polled when remote push is unavailable (e.g. Expo Go Android).</dd>
+            <dt><strong>Workspace</strong></dt><dd>In-app product shell selection: invoice, snackify, or career.</dd>
+            <dt><strong>Store demo</strong></dt><dd>Fixture mode for screenshots; guarded so production store binaries stay off unless explicitly allowed.</dd>
+          </dl>
+        </section>
+
+        <footer class="doc-foot">
+          <p>
+            Handbook generated for the Applywizz mobile split to
+            <a href="https://github.com/Tech-Applywizz-git-account/applywizz-app">applywizz-app</a>.
+            Companion docs: <a href="./SYSTEM_ARCHITECTURE.md">System architecture</a> ·
+            <a href="./PUSH_NOTIFICATIONS.md">Push notifications</a>.
+            Open this file in a browser for the full reading experience.
+          </p>
+          <p><a href="#top">Back to top</a></p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

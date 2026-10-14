@@ -1,3 +1,10 @@
+## Live handbook (browser UI)
+
+Open the rendered developer handbook here (GitHub Pages):
+
+**https://tech-applywizz-git-account.github.io/applywizz-app/**
+
+Source file in this repo: `docs/developer-handbook.html` (also served as `docs/index.html`).
 # Applywizz Mobile
 
 Expo staff app for invoices, billing, clients, reports, incentives, expenses, disputes, and payment push alerts. Also hosts Snackify and Career Associate workspaces when the user is entitled.
