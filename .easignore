@@ -1,0 +1,18 @@
+# Local ignore for builds started from app/mobile with EAS_NO_VCS=1
+node_modules/
+.expo/
+dist/
+build/
+*.log
+.env
+.env.*
+!.env.example
+google-service-account.json
+eas-build-fail-log.txt
+eas-build-fail-log-clean.txt
+_jdk17/
+_keystore_tmp/
+credentials/
+credentials.json
+*.jks
+*.keystore

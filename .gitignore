@@ -1,0 +1,31 @@
+# EAS & Build Artifacts
+dist/
+dist-*/
+.ios-audit-temp/
+.expo/
+.eas/
+ios/
+android/
+
+# Credentials & Keystores
+eas-build-fail-log*.txt
+google-service-account.json
+google-services.json
+!google-services.json.example
+credentials.json
+credentials/
+_keystore_tmp/
+_jdk17/
+*.jks
+*.keystore
+
+# Environments & Local Settings
+.env
+.env.local
+.env.*.local
+
+# Logs & Types
+*.log
+build_log.txt
+*.tsbuildinfo
+node_modules/
